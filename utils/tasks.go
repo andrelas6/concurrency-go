@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+
+	randv2 "math/rand/v2"
 	"time"
 )
 
@@ -32,7 +34,12 @@ func GetTasksAsync(ctx context.Context) <-chan worker.Task[string] {
 	go func() {
 		defer close(ch)
 		for _, t := range tasks {
-			time.Sleep(time.Duration(rand.Intn(1e3)) * time.Millisecond)
+			select {
+			case <-time.After(time.Millisecond + randv2.N(100*time.Millisecond)):
+			case <-ctx.Done():
+				return
+			}
+
 			select {
 			case ch <- t:
 			case <-ctx.Done():
